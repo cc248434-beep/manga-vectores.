@@ -1,0 +1,705 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Serif+JP:wght@400;700&family=Space+Mono:wght@400;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: var(--color-text-primary);
+    --muted: var(--color-text-secondary);
+    --surface: var(--color-background-secondary);
+    --border: var(--color-border-tertiary);
+    --panel-bg: var(--color-background-primary);
+    --accent: #D85A30;
+    --accent2: #185FA5;
+    --accent3: #1D9E75;
+  }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+
+  .app { font-family: var(--font-sans); padding: 1.5rem 0; max-width: 680px; }
+
+  .top-banner {
+    display: flex; align-items: center; gap: 16px;
+    border-bottom: 3px solid var(--ink); padding-bottom: 1rem; margin-bottom: 1.5rem;
+  }
+  .top-banner .title-block { flex: 1; }
+  .top-banner h1 {
+    font-family: 'Bangers', cursive; font-size: 32px; letter-spacing: 2px;
+    color: var(--ink); line-height: 1;
+  }
+  .top-banner h1 span { color: var(--accent); }
+  .top-banner p { font-size: 12px; color: var(--muted); margin-top: 4px; font-family: 'Space Mono', monospace; }
+  .badge {
+    background: var(--accent); color: white; font-family: 'Bangers', cursive;
+    font-size: 14px; padding: 6px 14px; border-radius: 4px; letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; border-bottom: 2px solid var(--ink); }
+  .tab {
+    font-family: 'Space Mono', monospace; font-size: 12px; padding: 8px 14px;
+    cursor: pointer; border: none; background: transparent; color: var(--muted);
+    border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.15s;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* MANGA PANEL STYLES */
+  .manga-page {
+    background: var(--panel-bg); border: 3px solid var(--ink);
+    padding: 12px; display: grid; gap: 8px;
+  }
+  .manga-page.layout-2col { grid-template-columns: 1fr 1fr; }
+  .manga-page.layout-main { grid-template-columns: 2fr 1fr; grid-template-rows: auto auto; }
+
+  .panel {
+    background: var(--panel-bg); border: 2px solid var(--ink);
+    position: relative; overflow: hidden; min-height: 140px;
+    display: flex; flex-direction: column; padding: 12px;
+  }
+  .panel.tall { min-height: 200px; }
+  .panel.wide { grid-column: 1 / -1; }
+  .panel.accent-bg { background: #FAF0EB; }
+  .panel.blue-bg { background: #E6F1FB; }
+  .panel.green-bg { background: #EAF3DE; }
+
+  .panel-num {
+    position: absolute; top: 4px; right: 6px;
+    font-family: 'Space Mono', monospace; font-size: 9px; color: #aaa;
+  }
+
+  /* Speech bubbles */
+  .bubble {
+    background: white; border: 2px solid var(--ink);
+    border-radius: 18px; padding: 8px 12px;
+    font-size: 12px; line-height: 1.4; position: relative;
+    display: inline-block; max-width: 85%; margin-bottom: 8px;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .bubble.thought { border-style: dashed; border-radius: 50%; padding: 10px 14px; }
+  .bubble.shout {
+    border-radius: 4px; background: #FFF8E1; border-color: #B8860B;
+    font-weight: 700; font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 1px;
+  }
+  .bubble.teacher {
+    background: #E6F1FB; border-color: var(--accent2); max-width: 95%;
+  }
+  .bubble::after {
+    content: ''; position: absolute; bottom: -10px; left: 20px;
+    border-left: 8px solid transparent; border-right: 0 solid transparent;
+    border-top: 10px solid var(--ink);
+  }
+  .bubble.right::after { left: auto; right: 20px; }
+  .bubble.thought::after { display: none; }
+  .bubble.shout::after { border-top-color: #B8860B; }
+  .bubble.teacher::after { border-top-color: var(--accent2); }
+
+  /* Characters SVG */
+  .char-area { display: flex; align-items: flex-end; gap: 8px; margin-top: auto; }
+  .char { text-align: center; font-size: 10px; color: var(--muted); }
+
+  /* Math blocks inside panels */
+  .math-box {
+    background: #f8f8f8; border-left: 3px solid var(--accent);
+    padding: 8px 10px; font-family: 'Space Mono', monospace; font-size: 11px;
+    margin: 6px 0; line-height: 1.8; color: var(--ink);
+  }
+  .math-box.blue { border-left-color: var(--accent2); background: #EEF5FC; }
+  .math-box.green { border-left-color: var(--accent3); background: #EAF3DE; }
+  .panel-label {
+    font-family: 'Bangers', cursive; font-size: 16px; letter-spacing: 1px;
+    color: var(--accent); margin-bottom: 4px;
+  }
+
+  /* GUION SECTION */
+  .chapter-card {
+    border: 2px solid var(--ink); margin-bottom: 12px; overflow: hidden;
+  }
+  .chapter-header {
+    background: var(--ink); color: white; padding: 8px 14px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Bangers', cursive; font-size: 18px; letter-spacing: 1px; cursor: pointer;
+  }
+  .chapter-header .num {
+    background: var(--accent); color: white; border-radius: 50%;
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .chapter-body { padding: 14px; background: var(--panel-bg); display: none; }
+  .chapter-body.open { display: block; }
+
+  .scene { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px dashed var(--border); }
+  .scene:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .scene-label {
+    font-family: 'Space Mono', monospace; font-size: 10px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+  }
+  .dialog-line { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+  .dialog-line .who {
+    font-weight: 700; min-width: 80px; color: var(--accent2);
+    font-family: 'Space Mono', monospace; font-size: 11px; padding-top: 1px;
+  }
+  .dialog-line.narr { color: var(--muted); font-style: italic; }
+  .dialog-line.narr .who { color: var(--muted); }
+  .dialog-line .math-inline {
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    background: var(--surface); border-radius: 3px; padding: 0 4px;
+  }
+
+  /* PERSONAJES */
+  .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .char-card {
+    border: 2px solid var(--ink); overflow: hidden;
+  }
+  .char-top {
+    padding: 14px; text-align: center;
+    border-bottom: 2px solid var(--ink);
+  }
+  .char-avatar {
+    width: 70px; height: 70px; margin: 0 auto 8px; border-radius: 50%;
+    border: 3px solid var(--ink); display: flex; align-items: center; justify-content: center;
+    font-size: 32px; font-weight: 700;
+  }
+  .char-name {
+    font-family: 'Bangers', cursive; font-size: 20px; letter-spacing: 1px;
+  }
+  .char-role { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .char-info { padding: 12px; font-size: 12px; line-height: 1.6; }
+  .char-info strong { display: block; font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; margin-top: 8px; }
+  .char-info strong:first-child { margin-top: 0; }
+
+  /* CONCEPTOS */
+  .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .concept-card {
+    border: 2px solid var(--ink); padding: 14px;
+    background: var(--panel-bg); position: relative;
+  }
+  .concept-card .corner-tag {
+    position: absolute; top: 0; right: 0;
+    background: var(--ink); color: white; font-size: 9px;
+    padding: 2px 6px; font-family: 'Space Mono', monospace;
+  }
+  .concept-title {
+    font-family: 'Bangers', cursive; font-size: 17px; letter-spacing: 1px; margin-bottom: 6px;
+  }
+  .concept-def { font-size: 12px; line-height: 1.5; color: var(--ink); margin-bottom: 8px; }
+  .concept-formula {
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    background: var(--surface); padding: 6px 8px; border-left: 3px solid var(--accent);
+    line-height: 1.7; color: var(--ink);
+  }
+  .concept-example {
+    font-size: 11px; color: var(--muted); margin-top: 6px; font-style: italic;
+  }
+
+  /* VIZ SECTION */
+  .viz-area { text-align: center; }
+  .viz-canvas-wrap { border: 2px solid var(--ink); display: inline-block; background: white; margin-bottom: 12px; }
+  canvas { display: block; }
+  .viz-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: center; margin-bottom: 12px; }
+  .viz-controls label { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .viz-controls input[type=range] { width: 90px; }
+  .viz-controls select { font-size: 12px; }
+  .viz-info-box {
+    font-family: 'Space Mono', monospace; font-size: 11px; line-height: 1.8;
+    background: var(--surface); border: 1px solid var(--border); padding: 10px 14px;
+    text-align: left; color: var(--ink);
+  }
+
+</style>
+
+<h2 class="sr-only">Herramienta de proyecto STEM: Manga sobre Espacios Vectoriales — incluye viñetas de ejemplo, guion por capítulos, personajes y visualización interactiva de vectores.</h2>
+
+<div class="app">
+  <div class="top-banner">
+    <div class="title-block">
+      <h1>VECTOR<span>ES</span> al Límite</h1>
+      <p>ISC · Proyecto STEM · Manga Educativo · Espacios Vectoriales</p>
+    </div>
+    <div class="badge">📐 ÁLGEBRA<br>LINEAL</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('preview')">Viñetas</button>
+    <button class="tab" onclick="switchTab('guion')">Guion</button>
+    <button class="tab" onclick="switchTab('personajes')">Personajes</button>
+    <button class="tab" onclick="switchTab('conceptos')">Conceptos</button>
+    <button class="tab" onclick="switchTab('viz')">Visualizador</button>
+  </div>
+
+  <!-- VIÑETAS PREVIEW -->
+  <div id="tab-preview" class="section active">
+
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;font-family:'Space Mono',monospace;">Páginas de muestra — úsalas como referencia de layout y estilo para tu equipo.</p>
+
+    <!-- Página 1: Portada de capítulo -->
+    <div class="manga-page" style="margin-bottom:12px; grid-template-columns:1fr;">
+      <div class="panel wide accent-bg tall" style="align-items:center;justify-content:center;text-align:center;min-height:160px;">
+        <div style="font-family:'Bangers',cursive;font-size:42px;letter-spacing:4px;color:var(--ink);line-height:1;">CAPÍTULO 1</div>
+        <div style="font-family:'Bangers',cursive;font-size:22px;color:var(--accent);letter-spacing:2px;margin-top:4px;">¿QUÉ ES UN ESPACIO VECTORIAL?</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;font-family:'Space Mono',monospace;">— La misteriosa clase del Prof. Ríos —</div>
+      </div>
+    </div>
+
+    <!-- Página 2: Introducción narrativa -->
+    <div class="manga-page layout-main" style="margin-bottom:12px;">
+      <div class="panel tall" style="grid-row:1/3;">
+        <div class="panel-num">①</div>
+        <div style="font-size:11px;color:var(--muted);font-style:italic;margin-bottom:10px;">Aula de Ingeniería, lunes por la mañana...</div>
+        <div class="bubble">¿Alguien sabe qué es un <em>vector</em> en serio... más allá de la física?</div>
+        <div style="height:10px;"></div>
+        <div class="bubble right" style="align-self:flex-end;">¡Yo sé! ¡Es una flechita con dirección y magnitud!</div>
+        <div class="char-area" style="margin-top:auto;">
+          <svg width="55" height="80" viewBox="0 0 55 80">
+            <circle cx="27" cy="18" r="14" fill="#E6F1FB" stroke="#333" stroke-width="2"/>
+            <rect x="10" y="32" width="35" height="40" rx="4" fill="#B5D4F4" stroke="#333" stroke-width="2"/>
+            <text x="27" y="22" text-anchor="middle" font-size="9" fill="#333">Prof.</text>
+            <rect x="18" y="24" width="18" height="2" fill="#333" rx="1"/>
+          </svg>
+          <svg width="50" height="75" viewBox="0 0 50 75">
+            <circle cx="25" cy="16" r="12" fill="#FAC775" stroke="#333" stroke-width="2"/>
+            <rect x="8" y="28" width="34" height="38" rx="4" fill="#F5C4B3" stroke="#333" stroke-width="2"/>
+            <line x1="25" y1="66" x2="14" y2="75" stroke="#333" stroke-width="2"/>
+            <line x1="25" y1="66" x2="36" y2="75" stroke="#333" stroke-width="2"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="panel blue-bg" style="min-height:100px;">
+        <div class="panel-num">②</div>
+        <div class="panel-label">PROF. RÍOS</div>
+        <div class="bubble teacher">Correcto... pero incompleto. Un espacio vectorial es mucho más general.</div>
+      </div>
+
+      <div class="panel" style="min-height:100px;">
+        <div class="panel-num">③</div>
+        <div class="bubble thought" style="font-size:11px;">(¿Qué tiene que ver esto con programar...?)</div>
+        <div class="char-area" style="justify-content:flex-end;">
+          <svg width="45" height="65" viewBox="0 0 45 65">
+            <circle cx="22" cy="14" r="11" fill="#9FE1CB" stroke="#333" stroke-width="2"/>
+            <rect x="6" y="25" width="32" height="33" rx="4" fill="#5DCAA5" stroke="#333" stroke-width="2"/>
+            <text x="22" y="17" text-anchor="middle" font-size="8" fill="#333">??</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Página 3: Explicación matemática manga-style -->
+    <div class="manga-page" style="grid-template-columns:1fr 1fr 1fr; margin-bottom:12px;">
+      <div class="panel wide" style="grid-column:1/-1;min-height:60px;flex-direction:row;align-items:center;gap:12px;">
+        <div class="panel-num">④</div>
+        <div class="bubble shout" style="margin:0;">¡UN ESPACIO VECTORIAL TIENE 8 AXIOMAS!</div>
+        <div style="font-size:10px;color:var(--muted);font-style:italic;">*El Prof. Ríos escribe en el pizarrón con entusiasmo peligroso*</div>
+      </div>
+
+      <div class="panel green-bg" style="min-height:130px;">
+        <div class="panel-num">⑤</div>
+        <div class="panel-label" style="color:var(--accent3);">CERRADURA +</div>
+        <div class="math-box green">u, v ∈ V<br>⟹ u + v ∈ V</div>
+        <div style="font-size:11px;color:var(--muted);">La suma de dos vectores sigue siendo un vector del mismo espacio.</div>
+      </div>
+
+      <div class="panel blue-bg" style="min-height:130px;">
+        <div class="panel-num">⑥</div>
+        <div class="panel-label" style="color:var(--accent2);">CERRADURA ×</div>
+        <div class="math-box blue">α ∈ ℝ, v ∈ V<br>⟹ αv ∈ V</div>
+        <div style="font-size:11px;color:var(--muted);">Escalar un vector no lo saca del espacio.</div>
+      </div>
+
+      <div class="panel accent-bg" style="min-height:130px;">
+        <div class="panel-num">⑦</div>
+        <div class="panel-label">NEUTRO +</div>
+        <div class="math-box">∃ 0 ∈ V tal que<br>v + 0 = v</div>
+        <div style="font-size:11px;color:var(--muted);">Existe el vector cero que no modifica nada.</div>
+      </div>
+    </div>
+
+    <p style="font-size:11px;color:var(--muted);text-align:center;font-family:'Space Mono',monospace;">
+      → Continúa en la pestaña <strong>Guion</strong> con los 3 capítulos completos.
+    </p>
+  </div>
+
+  <!-- GUION -->
+  <div id="tab-guion" class="section">
+
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;font-family:'Space Mono',monospace;">Guion escena por escena. Haz clic en cada capítulo para expandirlo.</p>
+
+    <div class="chapter-card">
+      <div class="chapter-header" onclick="toggleChapter(this)">
+        <div class="num">1</div>
+        ¿QUÉ ES UN ESPACIO VECTORIAL? <span style="margin-left:auto;font-size:13px;">▼</span>
+      </div>
+      <div class="chapter-body open">
+        <div class="scene">
+          <div class="scene-label">Escena 1 — El aula de ISC</div>
+          <div class="dialog-line narr"><span class="who">NARRACIÓN</span><span>Lunes, 7:45 AM. Aula 203. Álgebra Lineal.</span></div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>Buenos días. Hoy empezamos con lo que más confunde a todos: los espacios vectoriales.</span></div>
+          <div class="dialog-line"><span class="who">ALEX</span><span>Profe, ¿no es solo... sumar flechas?</span></div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>Un vector no es una flecha. Una flecha es <em>un ejemplo</em> de vector. La diferencia es enorme.</span></div>
+          <div class="dialog-line"><span class="who">VALE</span><span>(en voz baja) ¿Qué diferencia hay?</span></div>
+        </div>
+        <div class="scene">
+          <div class="scene-label">Escena 2 — La definición</div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>Un espacio vectorial V sobre ℝ es un conjunto con dos operaciones que cumplen 8 axiomas.</span></div>
+          <div class="dialog-line narr"><span class="who">PANEL</span><span>[Cuadro matemático con los 8 axiomas esquematizados]</span></div>
+          <div class="dialog-line"><span class="who">ALEX</span><span>¡8! ¿Todos hay que memorizarlos?</span></div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>No memorizar. <em>Entender</em>. Hay dos de cerradura, uno de conmutatividad, uno de asociatividad, dos de identidad, uno de inverso y uno de distributividad.</span></div>
+          <div class="dialog-line"><span class="who">VALE</span><span>¡Como las reglas de un juego de mesa, pero matemáticas!</span></div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>Exactamente, Vale. Excelente analogía.</span></div>
+        </div>
+        <div class="scene">
+          <div class="scene-label">Escena 3 — El ejemplo inesperado</div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>¿Saben qué es un espacio vectorial que usan diario como programadores?</span></div>
+          <div class="dialog-line"><span class="who">ALEX</span><span>¿Las coordenadas GPS?</span></div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>Sí. Y también: las imágenes digitales. Un píxel RGB es un vector en <span class="math-inline">ℝ³</span>.</span></div>
+          <div class="dialog-line narr"><span class="who">PANEL</span><span>[Viñeta grande: imagen pixelada que se transforma en vectores numéricos]</span></div>
+          <div class="dialog-line"><span class="who">VALE</span><span>¡Entonces la IA que procesa imágenes usa espacios vectoriales!</span></div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>Siempre. Toda la visión por computadora vive en espacios vectoriales.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chapter-card">
+      <div class="chapter-header" onclick="toggleChapter(this)">
+        <div class="num" style="background:#185FA5;">2</div>
+        SUBESPACIOS Y DEPENDENCIA LINEAL <span style="margin-left:auto;font-size:13px;">▶</span>
+      </div>
+      <div class="chapter-body">
+        <div class="scene">
+          <div class="scene-label">Escena 1 — El pasillo</div>
+          <div class="dialog-line narr"><span class="who">NARRACIÓN</span><span>Receso. Alex y Vale discuten frente a la máquina de café.</span></div>
+          <div class="dialog-line"><span class="who">ALEX</span><span>No entendí lo del subespacio. ¿Es como un espacio dentro de otro?</span></div>
+          <div class="dialog-line"><span class="who">VALE</span><span>Exacto. Imagina una línea que pasa por el origen dentro del plano ℝ². Esa línea es un subespacio de ℝ².</span></div>
+          <div class="dialog-line"><span class="who">ALEX</span><span>¿Y si la línea no pasa por el origen?</span></div>
+          <div class="dialog-line"><span class="who">VALE</span><span>¡Ya no es subespacio! Fallaría el axioma del vector cero.</span></div>
+        </div>
+        <div class="scene">
+          <div class="scene-label">Escena 2 — De vuelta en clase</div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>Un conjunto S ⊆ V es subespacio si: contiene al cero, es cerrado bajo suma y bajo producto escalar.</span></div>
+          <div class="dialog-line narr"><span class="who">PANEL</span><span>[Diagrama de Venn mostrando V grande con S pequeño adentro, el origen marcado]</span></div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>Ahora: dependencia lineal. ¿Cuándo un vector es "redundante"?</span></div>
+          <div class="dialog-line"><span class="who">ALEX</span><span>¿Cuando se puede escribir con los otros?</span></div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>Sí. Si <span class="math-inline">v₃ = 2v₁ - v₂</span>, entonces v₃ no aporta información nueva. El conjunto es linealmente dependiente.</span></div>
+        </div>
+        <div class="scene">
+          <div class="scene-label">Escena 3 — Aplicación en código</div>
+          <div class="dialog-line narr"><span class="who">NARRACIÓN</span><span>Vale abre su laptop y muestra código en pantalla.</span></div>
+          <div class="dialog-line"><span class="who">VALE</span><span>En Machine Learning, cuando tenemos features (columnas) dependientes linealmente, el modelo se confunde. ¡Por eso usamos PCA!</span></div>
+          <div class="dialog-line"><span class="who">ALEX</span><span>¿PCA está basado en espacios vectoriales?</span></div>
+          <div class="dialog-line"><span class="who">VALE</span><span>Totalmente. Buscamos una base ortogonal del espacio de datos.</span></div>
+          <div class="dialog-line narr"><span class="who">PANEL</span><span>[Viñeta doble: datos dispersos → ejes principales de PCA]</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chapter-card">
+      <div class="chapter-header" onclick="toggleChapter(this)">
+        <div class="num" style="background:#1D9E75;">3</div>
+        BASE, DIMENSIÓN Y TRANSFORMACIONES <span style="margin-left:auto;font-size:13px;">▶</span>
+      </div>
+      <div class="chapter-body">
+        <div class="scene">
+          <div class="scene-label">Escena 1 — El examen se acerca</div>
+          <div class="dialog-line narr"><span class="who">NARRACIÓN</span><span>Una semana después. El pizarrón anuncia: Examen parcial en 3 días.</span></div>
+          <div class="dialog-line"><span class="who">ALEX</span><span>¡Todavía no entiendo la base! ¿Para qué sirve?</span></div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>Una base es el conjunto mínimo de vectores que genera todo el espacio. Como los ingredientes básicos de cualquier receta.</span></div>
+          <div class="dialog-line"><span class="who">VALE</span><span>En ℝ², la base canónica es <span class="math-inline">{(1,0), (0,1)}</span>. Con ellos construyes cualquier vector del plano.</span></div>
+        </div>
+        <div class="scene">
+          <div class="scene-label">Escena 2 — Transformaciones lineales</div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>Una transformación lineal T: V → W respeta la estructura del espacio vectorial.</span></div>
+          <div class="dialog-line narr"><span class="who">PANEL</span><span>[Viñeta: cuadrícula que se deforma pero las líneas siguen siendo líneas]</span></div>
+          <div class="dialog-line"><span class="who">ALEX</span><span>¿Como cuando roto o escalo una imagen en Photoshop?</span></div>
+          <div class="dialog-line"><span class="who">PROF. RÍOS</span><span>¡Exacto! Rotación, escala, reflejo — todas son transformaciones lineales. Se representan con matrices.</span></div>
+          <div class="dialog-line"><span class="who">VALE</span><span>Y los gráficos 3D en videojuegos... ¡son transformaciones lineales todo el tiempo!</span></div>
+        </div>
+        <div class="scene">
+          <div class="scene-label">Escena 3 — Cierre</div>
+          <div class="dialog-line narr"><span class="who">NARRACIÓN</span><span>Día del examen. Alex y Vale llegan seguros.</span></div>
+          <div class="dialog-line"><span class="who">ALEX</span><span>Oye... resulta que los espacios vectoriales están en todos lados.</span></div>
+          <div class="dialog-line"><span class="who">VALE</span><span>En gráficos, en IA, en compresión de audio... era cuestión de verlo.</span></div>
+          <div class="dialog-line"><span class="who">ALEX</span><span>El Prof. Ríos tenía razón. No era memorizar. Era <em>entender</em>.</span></div>
+          <div class="dialog-line narr"><span class="who">FIN</span><span>Continuará... en Cálculo Vectorial.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERSONAJES -->
+  <div id="tab-personajes" class="section">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;font-family:'Space Mono',monospace;">Define o adapta los personajes a tu historia de equipo.</p>
+    <div class="char-grid">
+      <div class="char-card">
+        <div class="char-top" style="background:#E6F1FB;">
+          <div class="char-avatar" style="background:#B5D4F4;">A</div>
+          <div class="char-name">ALEX MORA</div>
+          <div class="char-role">El estudiante curioso</div>
+        </div>
+        <div class="char-info">
+          <strong>Personalidad</strong>
+          Impulsivo, pregunta sin filtro. Representa al estudiante que aprende haciendo preguntas "básicas" que en realidad son profundas.
+          <strong>Rol en la narrativa</strong>
+          Su confusión guía al lector. Cada pregunta de Alex es una pregunta del lector.
+          <strong>Frase típica</strong>
+          "¿Pero para qué sirve esto en código real?"
+          <strong>Conexión con ISC</strong>
+          Relaciona todo con programación, APIs y videojuegos.
+        </div>
+      </div>
+      <div class="char-card">
+        <div class="char-top" style="background:#EAF3DE;">
+          <div class="char-avatar" style="background:#9FE1CB;">V</div>
+          <div class="char-name">VALE SOTO</div>
+          <div class="char-role">La intuitiva creativa</div>
+        </div>
+        <div class="char-info">
+          <strong>Personalidad</strong>
+          Encuentra analogías creativas para todo. Puente entre Alex y el Prof. Ríos. Hace los conceptos accesibles.
+          <strong>Rol en la narrativa</strong>
+          Explica con ejemplos cotidianos. Sus analogías son los "momentos eureka" del manga.
+          <strong>Frase típica</strong>
+          "¡Es como cuando...!"
+          <strong>Conexión con ISC</strong>
+          Conecta álgebra lineal con Machine Learning y procesamiento de imágenes.
+        </div>
+      </div>
+      <div class="char-card">
+        <div class="char-top" style="background:#FAF0EB;">
+          <div class="char-avatar" style="background:#F5C4B3;">R</div>
+          <div class="char-name">PROF. RÍOS</div>
+          <div class="char-role">El maestro apasionado</div>
+        </div>
+        <div class="char-info">
+          <strong>Personalidad</strong>
+          Estricto pero entusiasta. Se emociona visiblemente cuando los alumnos conectan los conceptos con la práctica.
+          <strong>Rol en la narrativa</strong>
+          Guía formal. Da las definiciones precisas y corrige los errores de Alex sin ridiculizarlo.
+          <strong>Frase típica</strong>
+          "No memorices. Entiende."
+          <strong>Conexión con ISC</strong>
+          Muestra las aplicaciones reales en cada clase.
+        </div>
+      </div>
+      <div class="char-card">
+        <div class="char-top" style="background:#EEEDFE;">
+          <div class="char-avatar" style="background:#CECBF6;">∑</div>
+          <div class="char-name">SIGMA</div>
+          <div class="char-role">El personaje conceptual</div>
+        </div>
+        <div class="char-info">
+          <strong>Personalidad</strong>
+          Entidad abstracta que representa los axiomas vectoriales. Aparece en sueños o flashbacks de Alex.
+          <strong>Rol en la narrativa</strong>
+          Recurso visual para explicar conceptos sin diálogo. Sus "poderes" son los axiomas.
+          <strong>Frase típica</strong>
+          (habla en notación matemática)
+          <strong>Conexión con ISC</strong>
+          Opcional — añade el elemento fantástico/shonen al manga.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONCEPTOS -->
+  <div id="tab-conceptos" class="section">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;font-family:'Space Mono',monospace;">Referencia rápida de contenido matemático para incluir en las viñetas.</p>
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="corner-tag">Cap. 1</div>
+        <div class="concept-title" style="color:var(--accent);">Espacio Vectorial</div>
+        <div class="concept-def">Conjunto V con suma y producto escalar que cumplen 8 axiomas. Ejemplo: ℝⁿ, matrices, polinomios.</div>
+        <div class="concept-formula">V sobre ℝ: (V, +, ·)<br>∀ u,v ∈ V, α ∈ ℝ:<br>u+v ∈ V, αv ∈ V</div>
+        <div class="concept-example">Aplicación ISC: vectores de características en ML.</div>
+      </div>
+      <div class="concept-card">
+        <div class="corner-tag">Cap. 1</div>
+        <div class="concept-title" style="color:var(--accent);">Los 8 Axiomas</div>
+        <div class="concept-def">Cerradura (×2), conmutatividad, asociatividad (×2), identidad (×2), inverso aditivo, distributividad.</div>
+        <div class="concept-formula">u+v = v+u<br>(u+v)+w = u+(v+w)<br>∃0: v+0 = v<br>∃(-v): v+(-v) = 0</div>
+        <div class="concept-example">Verificar: ¿el conjunto de matrices 2×2 es espacio vectorial?</div>
+      </div>
+      <div class="concept-card">
+        <div class="corner-tag">Cap. 2</div>
+        <div class="concept-title" style="color:var(--accent2);">Subespacio</div>
+        <div class="concept-def">Subconjunto S ⊆ V que es espacio vectorial por sí mismo. Condición: 0 ∈ S, cerrado bajo + y ·.</div>
+        <div class="concept-formula">0 ∈ S<br>u,v ∈ S ⟹ u+v ∈ S<br>v ∈ S, α ∈ ℝ ⟹ αv ∈ S</div>
+        <div class="concept-example">Ejemplo: el plano z=0 es subespacio de ℝ³.</div>
+      </div>
+      <div class="concept-card">
+        <div class="corner-tag">Cap. 2</div>
+        <div class="concept-title" style="color:var(--accent2);">Dep. Lineal</div>
+        <div class="concept-def">Vectores son l.d. si uno se puede escribir como combinación lineal de los otros. Si no, son l.i.</div>
+        <div class="concept-formula">α₁v₁+α₂v₂+...+αₙvₙ=0<br>Solo si todos αᵢ=0: l.i.<br>Si algún αᵢ≠0: l.d.</div>
+        <div class="concept-example">Aplicación ISC: detección de features redundantes en datasets.</div>
+      </div>
+      <div class="concept-card">
+        <div class="corner-tag">Cap. 3</div>
+        <div class="concept-title" style="color:var(--accent3);">Base y Dimensión</div>
+        <div class="concept-def">Base = conjunto l.i. que genera V. Dimensión = número de vectores en cualquier base de V.</div>
+        <div class="concept-formula">B = {v₁,...,vₙ} base de V<br>⟺ B genera V y es l.i.<br>dim(V) = n</div>
+        <div class="concept-example">Base canónica de ℝ³: {e₁,e₂,e₃}. dim(ℝ³)=3.</div>
+      </div>
+      <div class="concept-card">
+        <div class="corner-tag">Cap. 3</div>
+        <div class="concept-title" style="color:var(--accent3);">Transf. Lineal</div>
+        <div class="concept-def">Función T:V→W que preserva suma y producto escalar. Se representa con matrices.</div>
+        <div class="concept-formula">T(u+v) = T(u)+T(v)<br>T(αv) = αT(v)<br>Matriz A: T(x)=Ax</div>
+        <div class="concept-example">Aplicación ISC: rotación 3D en gráficos, embeddings en NLP.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISUALIZADOR -->
+  <div id="tab-viz" class="section">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;font-family:'Space Mono',monospace;">Visualizador interactivo — úsalo en tu manga para ilustrar conceptos.</p>
+
+    <div class="viz-controls">
+      <label>v₁ x:</label>
+      <input type="range" id="v1x" min="-4" max="4" step="0.5" value="3">
+      <label>v₁ y:</label>
+      <input type="range" id="v1y" min="-4" max="4" step="0.5" value="1">
+      <label>v₂ x:</label>
+      <input type="range" id="v2x" min="-4" max="4" step="0.5" value="1">
+      <label>v₂ y:</label>
+      <input type="range" id="v2y" min="-4" max="4" step="0.5" value="2">
+      <label>α:</label>
+      <input type="range" id="alpha" min="-2" max="2" step="0.5" value="1">
+      <select id="viz-mode" onchange="drawViz()">
+        <option value="sum">Suma v₁+v₂</option>
+        <option value="scale">Escalar αv₁</option>
+        <option value="span">Span de v₁</option>
+      </select>
+    </div>
+
+    <div class="viz-area">
+      <div class="viz-canvas-wrap">
+        <canvas id="vecCanvas" width="340" height="300"></canvas>
+      </div>
+    </div>
+    <div class="viz-info-box" id="viz-info">...</div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.getAttribute('onclick').includes("'" + id + "'")) t.classList.add('active');
+  });
+}
+
+function toggleChapter(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('span:last-child');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  arrow.textContent = isOpen ? '▶' : '▼';
+}
+
+const canvas = document.getElementById('vecCanvas');
+const ctx = canvas.getContext('2d');
+
+function getVals() {
+  return {
+    v1x: parseFloat(document.getElementById('v1x').value),
+    v1y: parseFloat(document.getElementById('v1y').value),
+    v2x: parseFloat(document.getElementById('v2x').value),
+    v2y: parseFloat(document.getElementById('v2y').value),
+    alpha: parseFloat(document.getElementById('alpha').value),
+    mode: document.getElementById('viz-mode').value
+  };
+}
+
+function drawViz() {
+  const v = getVals();
+  const W = canvas.width, H = canvas.height;
+  const ox = W/2, oy = H/2;
+  const scale = 36;
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = '#e0e0e0';
+  ctx.lineWidth = 0.5;
+  for (let i = -5; i <= 5; i++) {
+    ctx.beginPath(); ctx.moveTo(ox + i*scale, 0); ctx.lineTo(ox + i*scale, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, oy + i*scale); ctx.lineTo(W, oy + i*scale); ctx.stroke();
+  }
+
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(W, oy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
+  ctx.fillStyle = '#333'; ctx.font = '10px monospace';
+  ctx.fillText('x', W-12, oy-4); ctx.fillText('y', ox+4, 10);
+
+  function drawArrow(fromX, fromY, toX, toY, color, label) {
+    const dx = toX - fromX, dy = toY - fromY;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len < 1) return;
+    const ux = dx/len, uy = dy/len;
+    const arrowLen = 9;
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY); ctx.stroke();
+    const ang = Math.atan2(dy, dx);
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(toX - arrowLen*Math.cos(ang-0.4), toY - arrowLen*Math.sin(ang-0.4));
+    ctx.lineTo(toX - arrowLen*Math.cos(ang+0.4), toY - arrowLen*Math.sin(ang+0.4));
+    ctx.closePath(); ctx.fill();
+    if (label) {
+      ctx.font = 'bold 12px monospace'; ctx.fillStyle = color;
+      ctx.fillText(label, toX + 5, toY - 5);
+    }
+  }
+
+  const toCanvasX = x => ox + x * scale;
+  const toCanvasY = y => oy - y * scale;
+
+  let infoText = '';
+
+  if (v.mode === 'sum') {
+    drawArrow(ox, oy, toCanvasX(v.v1x), toCanvasY(v.v1y), '#185FA5', 'v₁');
+    drawArrow(ox, oy, toCanvasX(v.v2x), toCanvasY(v.v2y), '#1D9E75', 'v₂');
+    const sx = v.v1x + v.v2x, sy = v.v1y + v.v2y;
+    ctx.setLineDash([5,3]);
+    drawArrow(toCanvasX(v.v1x), toCanvasY(v.v1y), toCanvasX(sx), toCanvasY(sy), '#1D9E75', '');
+    drawArrow(toCanvasX(v.v2x), toCanvasY(v.v2y), toCanvasX(sx), toCanvasY(sy), '#185FA5', '');
+    ctx.setLineDash([]);
+    drawArrow(ox, oy, toCanvasX(sx), toCanvasY(sy), '#D85A30', 'v₁+v₂');
+    infoText = `v₁ = (${v.v1x}, ${v.v1y})\nv₂ = (${v.v2x}, ${v.v2y})\nv₁+v₂ = (${sx}, ${sy})\n\nLa suma es otro vector en ℝ² → Cerradura ✓`;
+  } else if (v.mode === 'scale') {
+    drawArrow(ox, oy, toCanvasX(v.v1x), toCanvasY(v.v1y), '#185FA5', 'v₁');
+    const sx = v.alpha * v.v1x, sy = v.alpha * v.v1y;
+    drawArrow(ox, oy, toCanvasX(sx), toCanvasY(sy), '#D85A30', 'αv₁');
+    infoText = `v₁ = (${v.v1x}, ${v.v1y})\nα = ${v.alpha}\nαv₁ = (${sx.toFixed(1)}, ${sy.toFixed(1)})\n\nEl escalar mantiene la dirección → Cerradura ×escalar ✓`;
+  } else {
+    ctx.strokeStyle = '#CECBF6'; ctx.lineWidth = 1;
+    for (let t = -5; t <= 5; t += 0.5) {
+      const px = toCanvasX(t * v.v1x), py = toCanvasY(t * v.v1y);
+      if (t === Math.round(t)) { ctx.fillStyle = '#7F77DD'; ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI*2); ctx.fill(); }
+    }
+    ctx.setLineDash([3,2]);
+    ctx.beginPath();
+    ctx.moveTo(toCanvasX(-5*v.v1x), toCanvasY(-5*v.v1y));
+    ctx.lineTo(toCanvasX(5*v.v1x), toCanvasY(5*v.v1y));
+    ctx.strokeStyle = '#CECBF6'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.setLineDash([]);
+    drawArrow(ox, oy, toCanvasX(v.v1x), toCanvasY(v.v1y), '#185FA5', 'v₁');
+    infoText = `v₁ = (${v.v1x}, ${v.v1y})\nSpan(v₁) = {αv₁ | α ∈ ℝ}\n\nTodos los múltiplos de v₁ forman una línea recta.\nEsa línea es un SUBESPACIO de ℝ² (pasa por el origen).`;
+  }
+
+  document.getElementById('viz-info').textContent = infoText;
+}
+
+['v1x','v1y','v2x','v2y','alpha','viz-mode'].forEach(id => {
+  document.getElementById(id).addEventListener('input', drawViz);
+});
+
+drawViz();
+</script>
